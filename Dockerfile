@@ -1,18 +1,23 @@
 # Build Stage
-FROM golang:1.21 AS builder
+FROM golang:1.21
+
+# Set the working directory
 WORKDIR /app
+
+# Copy the Go modules manifests
+COPY go.mod go.sum ./
+
+# Download Go modules
+RUN go mod download
+
+# Copy the source code into the container
 COPY . .
-RUN go build -o main main.go
 
-# Run stage
-FROM alpine:3.16
-WORKDIR /app
-COPY --from=builder /app/main .
-COPY wait-for.sh .
-COPY app.env .
-COPY start.sh .
+# Build the Go application
+RUN go build -o main .
 
-
+# Expose the port that the app runs on
 EXPOSE 8080
-CMD [ "/app/main" ]
-ENTRYPOINT ["/app/start.sh"]
+
+# Run the application
+CMD ["./main"]

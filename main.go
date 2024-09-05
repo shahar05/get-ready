@@ -17,19 +17,37 @@ func main() {
 
 	db := InitializeDB()
 
+	initTable(db)
+
 	r := mux.NewRouter()
 
 	// Register Contact Handlers
 	contacts.RegisterRoutes(r, db)
 
 	// Start server
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+	portServer := "8080"
 
-	log.Printf("Server is running on port %s", port)
-	log.Fatal(http.ListenAndServe(":"+port, r))
+	log.Printf("Server is running on port %s", portServer)
+	log.Fatal(http.ListenAndServe(":"+portServer, r))
+}
+
+func initTable(db *sql.DB) error {
+	// Define the SQL statement for creating the table
+	query := `
+    CREATE TABLE IF NOT EXISTS contacts (
+        id SERIAL PRIMARY KEY,
+        first_name VARCHAR(100),
+        last_name VARCHAR(100),
+        phone VARCHAR(20),
+        address TEXT
+    );`
+
+	// Execute the SQL statement
+	_, err := db.Exec(query)
+	if err != nil {
+		return fmt.Errorf("error creating contacts table: %w", err)
+	}
+	return nil
 }
 
 // InitializeDB initializes the database connection
@@ -38,6 +56,9 @@ func InitializeDB() *sql.DB {
 
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"))
+
+	/// I must be removed as I am a comment
+	// fmt.Printf("This is the ConnSTR: %s", connStr)
 
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
