@@ -3,12 +3,16 @@ package contacts
 import (
 	"database/sql"
 	"fmt"
+	"log"
 )
 
 // GetContacts retrieves contacts with pagination
 func GetContacts(limit, offset int) ([]Contact, error) {
+	log.Printf("GetContacts: Retrieving contacts with limit %d and offset %d", limit, offset)
+
 	rows, err := DB.Query("SELECT id, first_name, last_name, phone, address FROM contacts LIMIT $1 OFFSET $2", limit, offset)
 	if err != nil {
+		log.Printf("GetContacts: Error executing query: %v", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -17,15 +21,19 @@ func GetContacts(limit, offset int) ([]Contact, error) {
 	for rows.Next() {
 		var c Contact
 		if err := rows.Scan(&c.ID, &c.FirstName, &c.LastName, &c.Phone, &c.Address); err != nil {
+			log.Printf("GetContacts: Error scanning row: %v", err)
 			return nil, err
 		}
 		contacts = append(contacts, c)
 	}
+	log.Printf("GetContacts: Retrieved %d contacts", len(contacts))
 	return contacts, nil
 }
 
 // SearchContacts searches for contacts based on a search term
 func SearchContacts(term string) ([]Contact, error) {
+	log.Printf("SearchContacts: Searching for contacts with term '%s'", term)
+
 	query := `
 		SELECT id, first_name, last_name, phone, address 
 		FROM contacts 
@@ -48,11 +56,13 @@ func SearchContacts(term string) ([]Contact, error) {
 		}
 		contacts = append(contacts, c)
 	}
+
 	return contacts, nil
 }
 
 // AddContact adds a new contact to the database and returns the ID
 func AddContact(contact Contact) (string, error) {
+	log.Printf("AddContact: Adding contact %v", contact)
 	var id string
 	err := DB.QueryRow(
 		"INSERT INTO contacts (first_name, last_name, phone, address) VALUES ($1, $2, $3, $4) RETURNING id",
@@ -61,11 +71,13 @@ func AddContact(contact Contact) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return id, nil
 }
 
 // UpdateContact updates an existing contact based on non-nil fields
 func UpdateContact(id string, updatedContact UpdateContactRequest) error {
+	log.Printf("UpdateContact: Updating contact with ID %s", id)
 	query := "UPDATE contacts SET"
 	var args []interface{}
 	argCount := 1
@@ -119,6 +131,7 @@ func UpdateContact(id string, updatedContact UpdateContactRequest) error {
 
 // DeleteContact removes a contact from the database
 func DeleteContact(id string) error {
+	log.Printf("DeleteContact: Deleting contact with ID %s", id)
 	result, err := DB.Exec("DELETE FROM contacts WHERE id = $1", id)
 	if err != nil {
 		return err
@@ -135,6 +148,7 @@ func DeleteContact(id string) error {
 
 // GetContactByID retrieves a contact by its ID
 func GetContactByID(id string) (Contact, error) {
+	log.Printf("GetContactByID: Retrieving contact with ID %s", id)
 	var contact Contact
 	err := DB.QueryRow(
 		"SELECT id, first_name, last_name, phone, address FROM contacts WHERE id = $1",
