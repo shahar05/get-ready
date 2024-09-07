@@ -11,15 +11,24 @@ import (
 
 var DB *sql.DB
 
+// SetDB sets the database connection
+func SetDB(db *sql.DB) {
+	DB = db
+}
+
 // RegisterRoutes sets up the HTTP routes for contacts
 func RegisterRoutes(r *mux.Router, db *sql.DB) {
-	DB = db
+	SetDB(db)
 	r.HandleFunc("/contacts", GetContactsHandler).Methods("GET")
 	r.HandleFunc("/contacts", AddContactHandler).Methods("POST")
-	r.HandleFunc("/contacts/{id}", UpdateContactHandler).Methods("PUT")
+	r.HandleFunc("/contacts", UpdateContactHandler).Methods("PUT")
 	r.HandleFunc("/contacts/{id}", DeleteContactHandler).Methods("DELETE")
 	r.HandleFunc("/contacts/search", SearchContactHandler).Methods("GET")
 }
+
+const (
+	MaxLimit = 10 // maximum number of items per page
+)
 
 // GetContactsHandler handles GET requests for contacts with pagination
 func GetContactsHandler(w http.ResponseWriter, r *http.Request) {
@@ -27,8 +36,8 @@ func GetContactsHandler(w http.ResponseWriter, r *http.Request) {
 	offsetStr := r.URL.Query().Get("offset")
 
 	limit, err := strconv.Atoi(limitStr)
-	if err != nil || limit <= 0 {
-		limit = 10 // default limit
+	if err != nil || limit <= 0 || limit > MaxLimit {
+		limit = MaxLimit // enforce default limit
 	}
 
 	offset, err := strconv.Atoi(offsetStr)
@@ -71,7 +80,7 @@ func AddContactHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err := AddContact(contact)
+	_, err := AddContact(contact)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -82,13 +91,18 @@ func AddContactHandler(w http.ResponseWriter, r *http.Request) {
 
 // UpdateContactHandler handles PUT requests to update an existing contact
 func UpdateContactHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
 	var updatedContact UpdateContactRequest
 	if err := json.NewDecoder(r.Body).Decode(&updatedContact); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err := UpdateContact(params["id"], updatedContact)
+
+	if updatedContact.ID == nil {
+		http.Error(w, "Update handler must get contact ID in order to update the relevant item.", http.StatusNotFound)
+		return
+	}
+
+	err := UpdateContact(*updatedContact.ID, updatedContact)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return

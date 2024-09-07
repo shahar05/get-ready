@@ -51,11 +51,17 @@ func SearchContacts(term string) ([]Contact, error) {
 	return contacts, nil
 }
 
-// AddContact adds a new contact to the database
-func AddContact(contact Contact) error {
-	_, err := DB.Exec("INSERT INTO contacts (first_name, last_name, phone, address) VALUES ($1, $2, $3, $4)",
-		contact.FirstName, contact.LastName, contact.Phone, contact.Address)
-	return err
+// AddContact adds a new contact to the database and returns the ID
+func AddContact(contact Contact) (string, error) {
+	var id string
+	err := DB.QueryRow(
+		"INSERT INTO contacts (first_name, last_name, phone, address) VALUES ($1, $2, $3, $4) RETURNING id",
+		contact.FirstName, contact.LastName, contact.Phone, contact.Address,
+	).Scan(&id)
+	if err != nil {
+		return "", err
+	}
+	return id, nil
 }
 
 // UpdateContact updates an existing contact based on non-nil fields
@@ -106,7 +112,7 @@ func UpdateContact(id string, updatedContact UpdateContactRequest) error {
 		return err
 	}
 	if rowsAffected == 0 {
-		return sql.ErrNoRows
+		return fmt.Errorf("item not found with such id: %s", id)
 	}
 	return nil
 }
@@ -125,4 +131,17 @@ func DeleteContact(id string) error {
 		return sql.ErrNoRows
 	}
 	return nil
+}
+
+// GetContactByID retrieves a contact by its ID
+func GetContactByID(id string) (Contact, error) {
+	var contact Contact
+	err := DB.QueryRow(
+		"SELECT id, first_name, last_name, phone, address FROM contacts WHERE id = $1",
+		id,
+	).Scan(&contact.ID, &contact.FirstName, &contact.LastName, &contact.Phone, &contact.Address)
+	if err != nil {
+		return contact, err
+	}
+	return contact, nil
 }

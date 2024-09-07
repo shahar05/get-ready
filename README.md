@@ -1,12 +1,5 @@
 # Phonebook API
 
-## Run using Docker
-
-```bash
-docker build -t phonebook-api .
-docker run -p 8080:8080 phonebook-api
-```
-
 
 ### Instructions
 
@@ -27,5 +20,14 @@ docker run -p 8080:8080 phonebook-api
 3. **Save the file:**
    - Save and close the `.env` file.
 
-The application will automatically read these values when it starts up. Ensure that the `.env` file is not included in version control by adding it to your `.gitignore` file.
 
+## Run using Docker-Compose
+
+```bash
+docker-compose build --no-cache
+docker-compose up
+```
+
+
+## Tests
+- In order to run test just go to /tests directory and run the command: go test

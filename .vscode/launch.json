@@ -10,8 +10,14 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
-            "dlvFlags": ["--check-go-version=false"]
+            "dlvFlags": ["--check-go-version=false"],
+            "env": {
+                "DB_HOST": "localhost",
+                "DB_PORT": "5432",
+                "DB_USER": "postgres",
+                "DB_PASSWORD": "pass1234",
+                "DB_NAME": "contactdb"
+            }
         }
-        
     ]
 }

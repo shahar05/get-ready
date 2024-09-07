@@ -11,6 +11,7 @@ type Contact struct {
 
 // Contact represents a contact with optional fields
 type UpdateContactRequest struct {
+	ID        *string `json:"id"`
 	FirstName *string `json:"first_name"`
 	LastName  *string `json:"last_name"`
 	Phone     *string `json:"phone"`
