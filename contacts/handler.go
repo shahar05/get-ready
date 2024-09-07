@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"phonebook-api/utils"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -58,8 +59,7 @@ func GetContactsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("GetContactsHandler: Fetched %d contacts", len(contacts))
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(contacts)
+	utils.WriteJSON200(w, contacts)
 }
 
 // SearchContactHandler handles GET requests to search contacts
@@ -81,8 +81,7 @@ func SearchContactHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("SearchContactHandler: Found %d contacts for term: %s", len(contacts), term)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(contacts)
+	utils.WriteJSON200(w, contacts)
 }
 
 // AddContactHandler handles POST requests to add a new contact
@@ -100,10 +99,9 @@ func AddContactHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
+	contact.ID = id
 	log.Printf("AddContactHandler: Added new contact with ID: %s", id)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(contact)
+	utils.WriteJSON200(w, contact)
 }
 
 // UpdateContactHandler handles PUT requests to update an existing contact
@@ -129,8 +127,17 @@ func UpdateContactHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	log.Printf("UpdateContactHandler: Updated contact with ID: %s", id)
-	w.WriteHeader(http.StatusOK)
+	// Fetch the updated contact
+	contact, err := GetContactByID(id)
+	if err != nil {
+		log.Printf("UpdateContactHandler: Error retrieving updated contact with ID %s: %v", id, err)
+		http.Error(w, "Failed to retrieve updated contact", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("UpdateContactHandler: Successfully updated and returned contact with ID %s", id)
+	// Return the updated contact as JSON
+	utils.WriteJSON200(w, contact)
 }
 
 // DeleteContactHandler handles DELETE requests to remove a contact
