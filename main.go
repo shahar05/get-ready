@@ -5,6 +5,9 @@ import (
 	"net/http"
 	"phonebook-api/contacts"
 	"phonebook-api/database"
+	"phonebook-api/middleware"
+	"phonebook-api/token"
+	"phonebook-api/users"
 
 	_ "github.com/lib/pq"
 
@@ -12,15 +15,23 @@ import (
 )
 
 func main() {
-
 	db := database.Init()
 
 	r := mux.NewRouter()
 
+	// Create PASETO token maker
+	pasetoMaker, err := token.NewPasetoMaker("your-secret-key") // TODO: Replace with your actual key
+	if err != nil {
+		log.Fatalf("Failed to create token maker: %v", err)
+	}
+
 	// Register the HealthCheckHandler
 	r.HandleFunc("/", HealthCheckHandler).Methods("GET")
 
-	// Register Contact Handlers
+	// Register Contact Handlers with Auth Middleware
+	r.Use(middleware.AuthMiddleware(pasetoMaker))
+
+	users.RegisterRoutes(r, db)
 	contacts.RegisterRoutes(r, db)
 
 	// Start server

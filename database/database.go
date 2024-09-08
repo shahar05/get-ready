@@ -26,14 +26,14 @@ func Init() *sql.DB {
 	}
 
 	// Initialize the contacts table
-	if err := initTable(db); err != nil {
+	if err := initContactTable(db); err != nil {
 		log.Fatalf("failed to initialize the contacts table: %v", err)
 	}
 
 	return db
 }
 
-func initTable(db *sql.DB) error {
+func initContactTable(db *sql.DB) error {
 	// Define the SQL statement for creating the table
 	query := `
     CREATE TABLE IF NOT EXISTS contacts (
@@ -48,6 +48,25 @@ func initTable(db *sql.DB) error {
 	_, err := db.Exec(query)
 	if err != nil {
 		return fmt.Errorf("error creating contacts table: %w", err)
+	}
+	return nil
+}
+
+func initUserTable(db *sql.DB) error {
+	// Define the SQL statement for creating the table
+	query := `
+    CREATE TABLE IF NOT EXISTS users (
+        username VARCHAR PRIMARY KEY,
+        hashed_password VARCHAR NOT NULL,
+        full_name VARCHAR NOT NULL,
+        email VARCHAR UNIQUE NOT NULL,        
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );`
+
+	// Execute the SQL statement
+	_, err := db.Exec(query)
+	if err != nil {
+		return fmt.Errorf("error creating users table: %w", err)
 	}
 	return nil
 }

@@ -2,9 +2,11 @@ package utils
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func Ptr[T any](v T) *T {
@@ -26,11 +28,16 @@ func writeJSONResponse(w http.ResponseWriter, statusCode int, data interface{}) 
 	}
 }
 
-// GetRandomInRange generates a random integer between min and max (inclusive)
-func GetRandomInRange(min, max int) int {
-	if min > max {
-		log.Printf("Invalid range: min (%d) is greater than max (%d)\n", min, max)
-		return -1 // -1 equal to error
+// HashPassword returns the bcrypt hash of the password
+func HashPassword(password string) (string, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", fmt.Errorf("failed to hash password: %w", err)
 	}
-	return rand.Intn(max-min+1) + min
+	return string(hashedPassword), nil
+}
+
+// CheckPassword checks if the provided password is correct or not
+func CheckPassword(password string, hashedPassword string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
