@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"phonebook-api/server"
 	"phonebook-api/utils"
 	"time"
 
-	"github.com/alicebob/miniredis/server"
 	"github.com/gorilla/mux"
 )
 
