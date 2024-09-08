@@ -1,33 +1,37 @@
 package users
 
 import (
-	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
 	"phonebook-api/utils"
+	"time"
 
+	"github.com/alicebob/miniredis/server"
 	"github.com/gorilla/mux"
-	db "github.com/techschool/simplebank/db/sqlc"
-	"github.com/techschool/simplebank/util"
 )
 
-var DB *sql.DB
+// var DB *sql.DB
+// var TM token.Maker
 
-// SetDB sets the database connection
-func SetDB(db *sql.DB) {
-	DB = db
-}
+// // SetDB sets the database connection
+// func SetDB(db *sql.DB) {
+// 	DB = db
+// }
+
+// func SetTokenMaker(tokenMaker token.Maker) {
+// 	TM = tokenMaker
+// }
 
 // RegisterRoutes sets up the HTTP routes for contacts
-func RegisterRoutes(r *mux.Router, db *sql.DB) {
-	SetDB(db)
-	r.HandleFunc("/users", createUserHandler).Methods("POST")
-	r.HandleFunc("/users/login", LoginUserHandler).Methods("POST")
+func RegisterRoutes(r *mux.Router, server *server.Server) {
+
+	r.HandleFunc("/users", server.createUserHandler).Methods("POST")
+	r.HandleFunc("/users/login", server.LoginUserHandler).Methods("POST")
 }
 
 // createUser handles the creation of a new user
-func createUserHandler(w http.ResponseWriter, r *http.Request) {
+func (s *server.Server) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	var req CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -48,16 +52,16 @@ func createUserHandler(w http.ResponseWriter, r *http.Request) {
 		Email:          req.Email,
 	}
 
-	user, err := CreateUser(cup)
+	user, err := s.CreateUser(cup)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	utils.WriteJSON200(w, newUserResponse(user))
+	utils.WriteJSON200(w, newUserResponse(*user))
 }
 
-func newUserResponse(user db.User) UserResponse {
+func newUserResponse(user User) UserResponse {
 	return UserResponse{
 		Username:  user.Username,
 		FullName:  user.FullName,
@@ -67,7 +71,7 @@ func newUserResponse(user db.User) UserResponse {
 }
 
 // loginUser handles user login and token generation
-func LoginUserHandler(w http.ResponseWriter, r *http.Request) {
+func (s *server.Server) LoginUserHandler(w http.ResponseWriter, r *http.Request) {
 	type loginUserRequest struct {
 		Username string
 		Password string
@@ -81,33 +85,32 @@ func LoginUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	retrievedUser, err := GetUser(reqUser.Username)
+	retrievedUser, err := s.GetUser(reqUser.Username)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
-	err = util.CheckPassword(reqUser.Password, retrievedUser.HashedPassword)
+	err = utils.CheckPassword(reqUser.Password, retrievedUser.HashedPassword)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
-	accessToken, _, err := server.tokenMaker.CreateToken(
-		user.Username,
-		server.config.AccessTokenDuration,
+	accessToken, _, err := s.CreateToken(
+		retrievedUser.Username,
+		time.Minute*15,
 	)
 
-	// if err != nil {
-	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-	// 	return
-	// }
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	// res := &loginUserResponse{
-	// 	AccessToken: accessToken,
-	// 	User:        newUserResponse(user),
-	// }
+	res := &LoginUserResponse{
+		AccessToken: accessToken,
+		User:        newUserResponse(retrievedUser),
+	}
 
-	w.Header().Set("Content-Type", "application/json")
-	// json.NewEncoder(w).Encode(res)
+	utils.WriteJSON200(w, res)
 }
