@@ -12,10 +12,13 @@
     DB_USER=<db_user>
     DB_PASSWORD=<db_pass>
     DB_NAME=<db_name>
+    DB_HOST=<db_host>
+    DB_PORT=<db_port>
     ```
 2. **Add your database credentials:**
    - Open the `.env` file in a text editor.
-   - Replace `<db_user>`, `<db_pass>`, and `<db_name>` with your actual database username, password, and database name.
+   - Replace `<db_user>`, `<db_pass>`, `<db_name>`, `<db_host>` and `<db_port>`
+     with your actual database: username, password, database name, host and port.
 
 3. **Save the file:**
    - Save and close the `.env` file.
