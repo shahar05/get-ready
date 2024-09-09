@@ -15,6 +15,16 @@
     DB_HOST=<db_host>
     DB_PORT=<db_port>
     ```
+    for example:
+   ```
+   # .env
+   DB_USER=postgres
+   DB_PASSWORD=pass1234
+   DB_NAME=contactdb
+   DB_HOST=localhost
+   DB_PORT=5432
+   ```
+   כרגגדדג
 2. **Add your database credentials:**
    - Open the `.env` file in a text editor.
    - Replace `<db_user>`, `<db_pass>`, `<db_name>`, `<db_host>` and `<db_port>`
