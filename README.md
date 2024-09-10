@@ -42,5 +42,75 @@ docker-compose up
 ```
 
 
+
+
+## API Endpoints
+
+### 1. Get All Contacts
+**GET /contacts**  
+Returns a list of all contacts.
+
+### 2. Add New Contact
+**POST /contacts**  
+Create a new contact.
+
+**Payload:**
+```json
+{
+  "first_name": "string",
+  "last_name": "string",
+  "phone": "string",
+  "address": "string"
+}
+```
+
+### 3. Update Contact
+**PUT /contacts**  
+Update an existing contact. Only the `id` is required, other fields can be `null` if not updating them.
+
+**Payload:**
+```json
+{
+  "id": "string",
+  "first_name": "string or null",
+  "last_name": "string or null",
+  "phone": "string or null",
+  "address": "string or null"
+}
+```
+
+### 5. Search Contacts
+**GET /contacts/search**  
+Search for contacts by a search term.
+
+**Query Parameter:**
+- `term` (required): The search term to find contacts by any matching fields (first name, last name, phone, or address).
+
+**Example:**
+```
+GET /contacts/search?term=john
+```
+
+**Response:**
+- `200 OK`  
+  Returns a list of contacts matching the search term.
+  
+- `400 Bad Request`  
+  If the `term` parameter is missing.
+
+**Sample Response:**
+```json
+[
+  {
+    "id": "1",
+    "first_name": "John",
+    "last_name": "Doe",
+    "phone": "+1234567890",
+    "address": "123 Main St"
+  }
+]
+```
+
+
 ## Tests
-- In order to run test just go to /tests directory and run the command: go test
+- To run the tests, navigate to the `/tests` directory and execute the following command: `go test`.
